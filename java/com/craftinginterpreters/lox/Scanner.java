@@ -102,7 +102,13 @@ class Scanner {
                     // A comment goes until the end of the line.
                     while (peek() != '\n' && !isAtEnd())
                         advance();
-                } else {
+                } else if (match('*')) {
+                    // A comment that could be multiline
+                    while (peek() != '*' && peekNext() != '/' && !isAtEnd())
+                        advance();
+                        advance();
+                        advance();
+                }else {
                     addToken(SLASH);
                 }
                 break;
@@ -183,6 +189,12 @@ class Scanner {
         return source.charAt(current + 1);
     }
 
+    private char peekPrevious() {
+        if (current - 1 < 0)
+            return '\0';
+        return source.charAt(current - 1);
+    }
+
     private void string() {
         while (peek() != '"' && !isAtEnd()) {
             if (peek() == '\n')
@@ -225,6 +237,11 @@ class Scanner {
 
     private char advance() {
         return source.charAt(current++);
+    }
+
+    private char advance(int steps) {
+        current = current + steps;
+        return source.charAt(current);
     }
 
     private void addToken(TokenType type) {
