@@ -104,9 +104,17 @@ class Scanner {
                         advance();
                 } else if (match('*')) {
                     // A comment that could be multiline
-                    while (!(peekPrevious() == '*' && peek() == '/') && !isAtEnd()) 
+                    System.out.println("----------");
+                    System.out.println(peekPrevious());
+                    System.out.println(peek());
+                    System.out.println("----------");
+                    while (true) {
+                        if((peekPrevious() == '*' && peek() == '/') || isAtEnd()) {
+                            advance();
+                            break;
+                        }
                         advance();
-                    advance();
+                    }
                 }else {
                     addToken(SLASH);
                 }
