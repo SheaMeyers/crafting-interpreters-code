@@ -1,0 +1,14 @@
+{
+    "configurations": [
+      {
+        "type": "java",
+        "name": "Run Lox",
+        "request": "launch",
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal",
+        "stopOnEntry": false,
+        "mainClass": "com.craftinginterpreters.lox.Lox",
+        "args": "jlox/src/main/java/com/craftinginterpreters/lox/test2.lox",
+      }
+    ]
+  }
