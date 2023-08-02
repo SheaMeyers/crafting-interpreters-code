@@ -8,7 +8,7 @@
         "console": "integratedTerminal",
         "stopOnEntry": false,
         "mainClass": "com.craftinginterpreters.lox.Lox",
-        "args": "jlox/src/main/java/com/craftinginterpreters/lox/test2.lox",
+        "args": "jlox/src/main/java/com/craftinginterpreters/lox/test.lox"
       },
       {
         "type": "java",
@@ -17,7 +17,17 @@
         "cwd": "${workspaceFolder}",
         "console": "integratedTerminal",
         "stopOnEntry": false,
-        "mainClass": "com.craftinginterpreters.lox.Lox",
+        "mainClass": "com.craftinginterpreters.lox.Lox"
+      },
+      {
+        "type": "java",
+        "name": "Run Generate Ast",
+        "request": "launch",
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal",
+        "stopOnEntry": false,
+        "mainClass": "com.craftinginterpreters.tool.GenerateAst",
+        "args": "jlox/src/main/java/com/craftinginterpreters/lox"
       }
     ]
   }
