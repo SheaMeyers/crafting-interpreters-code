@@ -8,7 +8,7 @@
         "console": "integratedTerminal",
         "stopOnEntry": false,
         "mainClass": "com.craftinginterpreters.lox.Lox",
-        "args": "jlox/src/main/java/com/craftinginterpreters/lox/test5.lox"
+        "args": "jlox/src/main/java/com/craftinginterpreters/lox/test6.lox"
       },
       {
         "type": "java",
