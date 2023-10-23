@@ -1,5 +1,5 @@
-main: main.o chunk.o memory.o debug.o value.o vm.o compiler.o scanner.o
-	gcc -O -Wall -pedantic -ansi -std=c99 -o main main.o chunk.o memory.o debug.o value.o vm.o compiler.o scanner.o
+main: main.o chunk.o memory.o debug.o value.o vm.o compiler.o scanner.o object.o
+	gcc -O -Wall -pedantic -ansi -std=c99 -o main main.o chunk.o memory.o debug.o value.o vm.o compiler.o scanner.o object.o
 
 main.o: memory.o
 	gcc -O -Wall -pedantic -ansi -std=c99 -c main.c
@@ -24,6 +24,9 @@ compiler.o:
 
 scanner.o:
 	gcc -O -Wall -pedantic -ansi -std=c99 -c scanner.c
+
+object.o:
+	gcc -O -Wall -pedantic -ansi -std=c99 -c object.c
 
 clean:
 	rm *.o

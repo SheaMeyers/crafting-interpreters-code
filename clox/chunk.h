@@ -19,7 +19,7 @@ typedef enum
     OP_EQUAL,
     OP_GREATER,
     OP_LESS,
-    OP_RETURN,
+    OP_RETURN
 } OpCode;
 
 typedef struct
