@@ -92,9 +92,21 @@ static bool call(ObjClosure* closure, int argCount) {
 static bool callValue(Value callee, int argCount) {
   if (IS_OBJ(callee)) {
     switch (OBJ_TYPE(callee)) {
+      case OBJ_BOUND_METHOD: {
+        ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
+        vm.stackTop[-argCount - 1] = bound->receiver;
+        return call(bound->method, argCount);
+      }
       case OBJ_CLASS: {
         ObjClass* klass = AS_CLASS(callee);
         vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
+        Value initializer;
+        if (tableGet(&klass->methods, vm.initString, &initializer)) {
+          return call(AS_CLOSURE(initializer), argCount);
+        } else if (argCount != 0) {
+          runtimeError("Expected 0 arguments but got %d.", argCount);
+          return false;
+        }
         return true;
       }
       case OBJ_CLOSURE:
@@ -112,6 +124,47 @@ static bool callValue(Value callee, int argCount) {
   }
   runtimeError("Can only call functions and classes.");
   return false;
+}
+
+static bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount) {
+  Value method;
+  if (!tableGet(&klass->methods, name, &method)) {
+    runtimeError("Undefined property '%s'.", name->chars);
+    return false;
+  }
+  return call(AS_CLOSURE(method), argCount);
+}
+
+static bool invoke(ObjString* name, int argCount) {
+  Value receiver = peek(argCount);
+
+  if (!IS_INSTANCE(receiver)) {
+    runtimeError("Only instances have methods.");
+    return false;
+  }
+
+  ObjInstance* instance = AS_INSTANCE(receiver);
+
+  Value value;
+  if (tableGet(&instance->fields, name, &value)) {
+    vm.stackTop[-argCount - 1] = value;
+    return callValue(value, argCount);
+  }
+
+  return invokeFromClass(instance->klass, name, argCount);
+}
+
+static bool bindMethod(ObjClass* klass, ObjString* name) {
+  Value method;
+  if (!tableGet(&klass->methods, name, &method)) {
+    runtimeError("Undefined property '%s'.", name->chars);
+    return false;
+  }
+
+  ObjBoundMethod* bound = newBoundMethod(peek(0), AS_CLOSURE(method));
+  pop();
+  push(OBJ_VAL(bound));
+  return true;
 }
 
 static ObjUpvalue* captureUpvalue(Value* local) {
@@ -148,6 +201,13 @@ static void closeUpvalues(Value* last) {
   }
 }
 
+static void defineMethod(ObjString* name) {
+  Value method = peek(0);
+  ObjClass* klass = AS_CLASS(peek(1));
+  tableSet(&klass->methods, name, method);
+  pop();
+}
+
 static bool isFalsey(Value value) {
   return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
@@ -182,6 +242,9 @@ void initVM()
   initTable(&vm.globals);
   initTable(&vm.strings);
 
+  vm.initString = NULL;
+  vm.initString = copyString("init", 4);
+
   defineNative("clock", clockNative);
 }
 
@@ -189,6 +252,7 @@ void freeVM()
 {
   freeTable(&vm.globals);
   freeTable(&vm.strings);
+  vm.initString = NULL;
   freeObjects();
 }
 
@@ -350,6 +414,15 @@ CallFrame* frame = &vm.frames[vm.frameCount - 1];
               frame = &vm.frames[vm.frameCount - 1];
               break;
             }
+            case OP_INVOKE: {
+              ObjString* method = READ_STRING();
+              int argCount = READ_BYTE();
+              if (!invoke(method, argCount)) {
+                return INTERPRET_RUNTIME_ERROR;
+              }
+              frame = &vm.frames[vm.frameCount - 1];
+              break;
+            }
             case OP_CLOSURE: {
               ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
               ObjClosure* closure = newClosure(function);
@@ -403,8 +476,10 @@ CallFrame* frame = &vm.frames[vm.frameCount - 1];
                 break;
               }
 
-              runtimeError("Undefined property '%s'.", name->chars);
-              return INTERPRET_RUNTIME_ERROR;
+              if (!bindMethod(instance->klass, name)) {
+                return INTERPRET_RUNTIME_ERROR;
+              }
+              break;
             }
             case OP_SET_PROPERTY: {
               if (!IS_INSTANCE(peek(1))) {
@@ -419,6 +494,9 @@ CallFrame* frame = &vm.frames[vm.frameCount - 1];
               push(value);
               break;
             }
+            case OP_METHOD:
+              defineMethod(READ_STRING());
+              break;
         }
     }
 
